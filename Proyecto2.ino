@@ -1,12 +1,17 @@
 #include <NewPing.h>
  
-/*Aqui se configuran los pines donde debemos conectar el sensor*/
-#define TRIGGER_PIN  13
-#define ECHO_PIN     12
+/*pines para sensores*/
+#define TRIGGER_PIN_1  13 //sensor 1
+#define ECHO_PIN_1     12 //sensor 1
+
+#define TRIGGER_PIN_2  2 //sensor 2
+#define ECHO_PIN_2     1 //sensor 2
 #define MAX_DISTANCE 400
  
 /*Crear el objeto de la clase NewPing*/
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+NewPing sonar1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);
+NewPing sonar2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);
+/*pines para las luces*/
 int greenled1 = 22;
 int greenled2 = 23;
 int greenled3 = 24;
@@ -19,7 +24,13 @@ int redled1 = 30;
 int redled2 = 31;
 int luzprincipal1 = 2;
 int luzprincipal2 = 3;
-int alarm = 11;
+
+/*pin para el buzzer*/
+int speakerPin = 11;
+
+/*pin para el motor*/
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -35,7 +46,7 @@ void setup() {
   pinMode(redled2, OUTPUT);
   pinMode(luzprincipal1, OUTPUT);
   pinMode(luzprincipal2, OUTPUT);
-  pinMode(alarm,OUTPUT);
+  pinMode(speakerPin,OUTPUT);
 }
  
 void loop() {
@@ -49,7 +60,7 @@ int sensor1(){
      // Esperar 1 segundo entre mediciones
   delay(300);
   // Obtener medicion de tiempo de viaje del sonido y guardar en variable uS
-  int uS = sonar.ping_median();
+  int uS = sonar1.ping_median();
   int distancia = (uS / US_ROUNDTRIP_CM);
   // Imprimir la distancia medida a la consola serial
   Serial.print("Distancia: ");
@@ -58,6 +69,21 @@ int sensor1(){
   Serial.println("cm");
   return distancia;
 }
+
+int sensor2(){
+     // Esperar 1 segundo entre mediciones
+  delay(300);
+  // Obtener medicion de tiempo de viaje del sonido y guardar en variable uS
+  int uS = sonar2.ping_median();
+  int distancia = (uS / US_ROUNDTRIP_CM);
+  // Imprimir la distancia medida a la consola serial
+  Serial.print("Distancia: ");
+  // Calcular la distancia con base en una constante
+  Serial.print(uS / US_ROUNDTRIP_CM);
+  Serial.println("cm");
+  return distancia;
+}
+
 void controlintensidad(int intensidad){
   analogWrite(luzprincipal1,intensidad);
   analogWrite(luzprincipal2,intensidad);
@@ -65,15 +91,36 @@ void controlintensidad(int intensidad){
 
 void alarma_distancia(int distancia){
     if (distancia < 18){
-    digitalWrite(alarm, HIGH);
+    digitalWrite(speakerPin, HIGH);
     delay(200);
-    digitalWrite(alarm, LOW);
+    digitalWrite(speakerPin, LOW);
     delay(100);
     }
     else{
-    digitalWrite(alarm, LOW);
+    digitalWrite(speakerPin, LOW);
     }
   }
+
+void alarma_robo(int alerta){
+  if (alerta == 1){
+      for(int hz = 440; hz < 1000; hz++){
+        tone(speakerPin, hz, 50);
+        delay(5);
+      }
+      noTone(speakerPin);
+    
+      // Whoop down
+      for(int hz = 1000; hz > 440; hz--){
+        tone(speakerPin, hz, 50);
+        delay(5);
+      }
+      noTone(speakerPin);
+  }
+  else{
+    digitalWrite(speakerPin, LOW);
+    }
+}
+
 
 
 void controlleds(int distancia){
