@@ -51,7 +51,7 @@ void setup() {
  
 void loop() {
   int distancia1=sensor1();
-  controlleds(distancia1);
+  controlLeds(distancia1);
   controlintensidad(distancia1);
   alarma_distancia(distancia1);
 }
@@ -123,7 +123,7 @@ void alarma_robo(int alerta){
 
 
 
-void controlleds(int distancia){
+void controlLeds(int distancia){
     if(distancia<18){
     digitalWrite(greenled1, HIGH);
     digitalWrite(greenled2, HIGH);
