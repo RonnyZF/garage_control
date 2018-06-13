@@ -3,7 +3,6 @@
 /*pines para sensores*/
 #define TRIGGER_PIN_1  13 //sensor 1
 #define ECHO_PIN_1     12 //sensor 1
-
 #define TRIGGER_PIN_2  2 //sensor 2
 #define ECHO_PIN_2     1 //sensor 2
 #define MAX_DISTANCE 400
@@ -11,6 +10,7 @@
 /*Crear el objeto de la clase NewPing*/
 NewPing sonar1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);
 NewPing sonar2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);
+
 /*pines para las luces*/
 int greenled1 = 22;
 int greenled2 = 23;
@@ -25,13 +25,12 @@ int redled2 = 31;
 int luzprincipal1 = 2;
 int luzprincipal2 = 3;
 
-int pin1 = 52;
-int pin2 = 53;
-
 /*pin para el buzzer*/
 int speakerPin = 11;
 
 /*pin para el motor*/
+
+
 
 int estado1 = 1;
 int estado2 = 2;
@@ -44,6 +43,7 @@ int distancia_2;
 int alarma_on;
 int encendido_apertura=1;
 int intensidad_apertura=3;
+
 
 void setup() {
   Serial.begin(9600);
@@ -107,10 +107,16 @@ void loop() {
 
 }
 
+void loop(){
+  int distancia = sensor1();
+  sensor1();
+  sonido_distancia(distancia);
+  control_leds(distancia);
+}
 //Control del sensor de distancia uno
 int sensor1(){
      // Esperar 1 segundo entre mediciones
-  delay(300);
+  delay(100);
   // Obtener medicion de tiempo de viaje del sonido y guardar en variable uS
   int uS = sonar1.ping_median();
   int distancia = (uS / US_ROUNDTRIP_CM);
