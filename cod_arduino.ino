@@ -6,7 +6,8 @@
 #define TRIGGER_PIN_2  2 //sensor 2
 #define ECHO_PIN_2     1 //sensor 2
 #define MAX_DISTANCE 400
- 
+#include <SoftwareSerial.h>
+SoftwareSerial BTserial(15, 14); // RX | TX 
 /*Crear el objeto de la clase NewPing*/
 NewPing sonar1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);
 NewPing sonar2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);
@@ -35,7 +36,7 @@ int speakerPin = 11;
 int estado1 = 1;
 int estado2 = 2;
 
-int Estado=0;
+
 int encendido_luz;
 int intensidad_luz;
 int distancia_1;
@@ -60,59 +61,92 @@ void setup() {
   pinMode(luzprincipal1, OUTPUT);
   pinMode(luzprincipal2, OUTPUT);
   pinMode(speakerPin,OUTPUT);
-
   pinMode(estado1, INPUT);
   pinMode(estado2,INPUT);
-}
+  Serial.println("que desdea hacer a-abrir b- luz c- parquear");
+    
+  // HC-05 default serial speed for commincation mode is 9600
+    BTserial.begin(9600);
 
-
-
-char estadogeneral[2]={estado1,estado2};
-
-
-
+}  
+int Estado=0;
+int var_parqueo=0;
+char c;
+int cont;
 void loop() {
     switch (Estado){//00 Control luz cochera-- 01 Apertura portón-- 10 Alarma-- 11 Definir default 
-      
-        case 0: //Estado cero, se controla el encendido y la intensidad de la luz principal
-          control_luz_principal(encendido_luz,intensidad_luz);
-        break;
+        
+       case 0: //Estado cero, se controla el encendido y la intensidad de la luz principal
+            recive();
+           //control_luz_principal(encendido_luz,intensidad_luz);
+            break;
+            
         
         case 1: //Estado uno, se controla la apertura del porton y se enciende la luz 
-         
+          Serial.println("estado1 \n");
           apertura_porton();
-          control_luz_principal(encendido_apertura,intensidad_apertura);
-          
+          Estado = 0;
+          //control_luz_principal(encendido_apertura,intensidad_apertura);
         break;
         
         case 2: //Estado dos, detección de obstaculos antes de parquear el vehiculo
-          distancia_1=sensor1();
-          distancia_2=sensor2();
-          deteccion_obstaculos(distancia_1, distancia_2);
+        Serial.println("estado2 \n");
+        //  distancia_1=sensor1();
+         // distancia_2=sensor2();
+        //  deteccion_obstaculos(distancia_1, distancia_2);
+        Estado = 0;
         break;
         
         case 3: //Estado tres, parqueo del vehiculo, se mide la distancia y se avisa al usuario con leds y sonido
-          distancia_1=sensor1();
-          sonido_distancia(distancia_1);
-          control_leds(distancia_1);         
+        Serial.println("Cuando termine de parquear presione a \n");
+        recive();
+        //Serial.println(Estado);
+        if (Estado != 49){
+        distancia_1=sensor1();
+        sonido_distancia(distancia_1);
+        control_leds(distancia_1,c);
+        Estado = 3;  
+        }
+        else if (Estado == 49){
+          Serial.println("Se estaciono correctamente \n");
+          Estado = 0;
+        }
         break;
         
         case 4: //Estado cuatro, se notifica movimiento en la cochera
-          distancia_1=sensor1();
-          distancia_2=sensor2();
-          alarma_on=deteccion_movimiento(distancia_1,distancia_2);
-          sonido_alarma(alarma_on);
+        Serial.println("estado4 \n");
+          //distancia_1=sensor1();
+          //distancia_2=sensor2();
+          //alarma_on=deteccion_movimiento(distancia_1,distancia_2);
+          //sonido_alarma(alarma_on);
+          Estado = 0;
         break;
     }
 
 }
 
-void loop(){
-  int distancia = sensor1();
-  sensor1();
-  sonido_distancia(distancia);
-  control_leds(distancia);
+char recive(){
+    // Keep reading from HC-05 and send to Arduino Serial Monitor
+    if (BTserial.available())
+    {  
+        c = BTserial.read();
+       // Serial.write(c);
+        Estado = c;
+        return Estado;
+    }
+ 
+    // Keep reading from Arduino Serial Monitor and send to HC-05
+    if (Serial.available())
+    {   
+        c =  Serial.read();
+        //BTserial.write(c);  
+        //Serial.println(c);
+        Estado = int(c)-48;
+       // Serial.print(Estado);
+        return Estado;
+    }
 }
+
 //Control del sensor de distancia uno
 int sensor1(){
      // Esperar 1 segundo entre mediciones
@@ -121,13 +155,12 @@ int sensor1(){
   int uS = sonar1.ping_median();
   int distancia = (uS / US_ROUNDTRIP_CM);
   // Imprimir la distancia medida a la consola serial
-  Serial.print("Distancia: ");
+  //Serial.print("Distancia: ");
   // Calcular la distancia con base en una constante
-  Serial.print(uS / US_ROUNDTRIP_CM);
-  Serial.println("cm");
+  //Serial.print(uS / US_ROUNDTRIP_CM);
+  //Serial.println("cm");
   return distancia;
 }
-
 //Control del sensor de distancia dos
 int sensor2(){
      // Esperar 1 segundo entre mediciones
@@ -136,10 +169,10 @@ int sensor2(){
   int uS = sonar2.ping_median();
   int distancia = (uS / US_ROUNDTRIP_CM);
   // Imprimir la distancia medida a la consola serial
-  Serial.print("Distancia: ");
+  //Serial.print("Distancia: ");
   // Calcular la distancia con base en una constante
-  Serial.print(uS / US_ROUNDTRIP_CM);
-  Serial.println("cm");
+  //Serial.print(uS / US_ROUNDTRIP_CM);
+  //Serial.println("cm");
   return distancia;
 }
 
@@ -177,9 +210,9 @@ int deteccion_movimiento(int distancia1, int distancia2){
 void sonido_distancia(int distancia){
     if (distancia < 18){
     digitalWrite(speakerPin, HIGH);
-    delay(200);
+    delay(50);
     digitalWrite(speakerPin, LOW);
-    delay(100);
+    delay(10);
     }
     else{
     digitalWrite(speakerPin, LOW);
@@ -191,8 +224,10 @@ void sonido_alarma(int alerta){
 }
 
 
+
+
 //Función para prender los leds de acuerdo a la distancia entre el auto y la pared
-void control_leds(int distancia){
+int control_leds(int distancia, char Estado){
     if(distancia<18){
     digitalWrite(greenled1, HIGH);
     digitalWrite(greenled2, HIGH);
@@ -215,7 +250,10 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
-    delay (300);}
+    delay (300);
+    Estado =3;
+    return Estado;
+    }
   else if(distancia<20){
     digitalWrite(greenled1, HIGH);
     digitalWrite(greenled2, HIGH);
@@ -227,6 +265,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, HIGH);
     digitalWrite(redled1, HIGH);
     digitalWrite(redled2, HIGH);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<21){
     digitalWrite(greenled1, HIGH);
@@ -239,6 +279,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, HIGH);
     digitalWrite(redled1, HIGH);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<23){
     digitalWrite(greenled1, HIGH);
@@ -251,6 +293,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, HIGH);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<25){
     digitalWrite(greenled1, HIGH);
@@ -263,6 +307,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<28){
     digitalWrite(greenled1, HIGH);
@@ -275,6 +321,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<30){
     digitalWrite(greenled1, HIGH);
@@ -287,6 +335,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<35){
     digitalWrite(greenled1, HIGH);
@@ -299,6 +349,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<40){
     digitalWrite(greenled1, HIGH);
@@ -311,6 +363,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
     else if(distancia<45){
     digitalWrite(greenled1, HIGH);
@@ -323,6 +377,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if(distancia<50){
     digitalWrite(greenled1, HIGH);
@@ -335,6 +391,8 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
   else if (distancia>30){
     digitalWrite(greenled1, LOW);
@@ -347,5 +405,7 @@ void control_leds(int distancia){
     digitalWrite(yellowled2, LOW);
     digitalWrite(redled1, LOW);
     digitalWrite(redled2, LOW);
+    Estado = 3;
+    return Estado;
   }
-}
+  }
