@@ -1,0 +1,19 @@
+/////solo hay que conectar IN1 IN2 del shield al arduino en los pines que dice ahi
+///alimentar con 5V
+
+
+int IN1= 8;
+int IN2=7;
+
+void setup() {
+  pinMode (IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
+}
+
+void loop() {
+ digitalWrite(IN1,HIGH);
+ digitalWrite(IN2,LOW);
+ 
+ 
+
+}
