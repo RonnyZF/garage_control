@@ -26,6 +26,9 @@ int redled2 = 31;
 int luzprincipal1 = 2;
 int luzprincipal2 = 3;
 
+int IN1= 8;
+int IN2=7;
+
 /*pin para el buzzer*/
 int speakerPin = 11;
 
@@ -63,7 +66,10 @@ void setup() {
   pinMode(speakerPin,OUTPUT);
   pinMode(estado1, INPUT);
   pinMode(estado2,INPUT);
-  Serial.println("que desdea hacer a-abrir b- luz c- parquear");
+  //Serial.println("que desdea hacer a-abrir b- luz c- parquear");
+
+  pinMode (IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
     
   // HC-05 default serial speed for commincation mode is 9600
     BTserial.begin(9600);
@@ -73,32 +79,40 @@ int Estado=0;
 int var_parqueo=0;
 char c;
 int cont;
+int encendido;
+int intensidad;
 void loop() {
-    switch (Estado){//00 Control luz cochera-- 01 Apertura portón-- 10 Alarma-- 11 Definir default 
-        
+    switch (Estado){//00 Control luz cochera-- 01 Apertura portón-- 10 Alarma-- 11 Definir default  
        case 0: //Estado cero, se controla el encendido y la intensidad de la luz principal
-            recive();
-           //control_luz_principal(encendido_luz,intensidad_luz);
+            Serial.println("Opciones de sus sistema: \n");
+            Serial.println("Presione 1  para estacionar \n");
+            Serial.println("Presione 4 para cambiar la intensidad");
+            Estado = 10;
             break;
-            
+       case 10:
+            recive();
+            break;
         
-        case 1: //Estado uno, se controla la apertura del porton y se enciende la luz 
-          Serial.println("estado1 \n");
+        case 1: //Apertura de porton
           apertura_porton();
-          Estado = 0;
-          //control_luz_principal(encendido_apertura,intensidad_apertura);
+          delay(1000);
+          Detener_porton();
+          Estado = 11;
         break;
         
-        case 2: //Estado dos, detección de obstaculos antes de parquear el vehiculo
-        Serial.println("estado2 \n");
-        //  distancia_1=sensor1();
-         // distancia_2=sensor2();
-        //  deteccion_obstaculos(distancia_1, distancia_2);
+        case 2: // Cierre porton
+        cierre_porton();
+        delay(1000);
+        Detener_porton();
         Estado = 0;
         break;
-        
-        case 3: //Estado tres, parqueo del vehiculo, se mide la distancia y se avisa al usuario con leds y sonido
+
+        case 11:
         Serial.println("Cuando termine de parquear presione a \n");
+        Estado = 3;
+        break;
+            
+        case 3: //Estado tres, parqueo del vehiculo, se mide la distancia y se avisa al usuario con leds y sonido
         recive();
         //Serial.println(Estado);
         if (Estado != 49){
@@ -109,11 +123,23 @@ void loop() {
         }
         else if (Estado == 49){
           Serial.println("Se estaciono correctamente \n");
-          Estado = 0;
+          Estado = 2;
         }
         break;
+
+        case 4:
+        Serial.println("Intensidad de luz deseada entre 1 2 3 y nada para apagar");
+        delay(4000);
+        encendido = 1;
+        recive();
+        Serial.println(Estado);
+        intensidad = Estado;
+        control_luz_principal(encendido,intensidad);
+        Estado = 0;
+        break;
         
-        case 4: //Estado cuatro, se notifica movimiento en la cochera
+        
+        case 5: //Estado cuatro, se notifica movimiento en la cochera
         Serial.println("estado4 \n");
           //distancia_1=sensor1();
           //distancia_2=sensor2();
@@ -180,24 +206,42 @@ int sensor2(){
 void control_luz_principal(int encendido, int intensidad){
    if(encendido!=0){
       if (intensidad == 1){
-          analogWrite(luzprincipal1,255);
-          analogWrite(luzprincipal2,255);
+          analogWrite(luzprincipal1,300);
+          analogWrite(luzprincipal2,300);
+          return;
       }
       else if(intensidad == 2){
-          analogWrite(luzprincipal1,200);
-          analogWrite(luzprincipal2,200);
-      }
-      else if(intensidad == 3){
           analogWrite(luzprincipal1,150);
           analogWrite(luzprincipal2,150);
+          return;
       }
+      else if(intensidad == 3){
+          analogWrite(luzprincipal1,50);
+          analogWrite(luzprincipal2,50);
+          return;
+      }
+      else{
+        analogWrite(luzprincipal1,0);
+        analogWrite(luzprincipal2,0);
+        return;}
    }
  }
  
 //Control del motor para la apertura del portón
 void apertura_porton(){
+  digitalWrite(IN1,HIGH);
+  digitalWrite(IN2,LOW);
+  return;
   }
-
+void cierre_porton(){
+  digitalWrite(IN1,LOW);
+  digitalWrite(IN2,HIGH);
+  return;
+  }
+void Detener_porton(){
+  digitalWrite(IN1,LOW);
+  digitalWrite(IN2,LOW);
+}
 //Deteccción de obstaculos en la cochera
 void deteccion_obstaculos(int distancia1, int distancia2){
   }
